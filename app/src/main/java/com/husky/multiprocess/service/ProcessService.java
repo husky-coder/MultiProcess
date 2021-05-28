@@ -3,6 +3,7 @@ package com.husky.multiprocess.service;
 import android.app.Service;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Binder;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.RemoteCallbackList;
@@ -29,29 +30,10 @@ public class ProcessService extends Service {
             /**
              * 权限校验方式一
              * 在onTransact中检验
-             * com.husky.multiprocess.permission.REMOTE_SERVICE_PERMISSION 远程服务权限字符串
              */
-//            if (checkCallingOrSelfPermission("com.husky.multiprocess.permission.REMOTE_SERVICE_PERMISSION")
-//                    == PackageManager.PERMISSION_DENIED) {
-//                Log.d(TAG, "onTransact>>权限校验失败！");
+//            if (!checkPermission()) {
 //                return false;
 //            }
-//
-//            /**
-//             * 包名校验
-//             */
-//            String packageName = null;
-//            // 获取客户端包名
-//            String[] packages = getPackageManager().getPackagesForUid(getCallingUid());
-//            if (packages != null && packages.length > 0) {
-//                packageName = packages[0];
-//            }
-//            // 校验包名
-//            if (packageName == null || !packageName.startsWith("com.husky.multiprocess")) {
-//                Log.d(TAG, "onTransact>>权限校验失败：" + packageName);
-//                return false;
-//            }
-//            Log.d(TAG, "onTransact>>权限校验成功：" + packageName);
 
             return super.onTransact(code, data, reply, flags);
         }
@@ -126,17 +108,43 @@ public class ProcessService extends Service {
     public IBinder onBind(Intent intent) {
         /**
          * 权限校验方式二
-         * 在onBind中检验
-         * com.husky.multiprocess.permission.REMOTE_SERVICE_PERMISSION 远程服务权限字符串
+         * 在onBind中检验，如果客户端和服务端是两个应用，则无法在onBind()实现校验的功能！
          */
-        if (checkCallingOrSelfPermission("com.husky.multiprocess.permission.REMOTE_SERVICE_PERMISSION")
-                == PackageManager.PERMISSION_DENIED) {
-            Log.d(TAG, "onTransact>>权限校验失败！");
+        if (!checkPermission()) {
             return null;
         }
-        Log.d(TAG, "onTransact>>权限校验成功！");
 
         return binder;
+    }
+
+    /**
+     * 权限校验
+     *
+     * @return
+     */
+    private boolean checkPermission() {
+        // 权限校验
+        if (checkCallingOrSelfPermission("com.husky.multiprocess.permission.REMOTE_SERVICE_PERMISSION")
+                == PackageManager.PERMISSION_DENIED) {  //com.husky.multiprocess.permission.REMOTE_SERVICE_PERMISSION 权限字符串
+            Log.d(TAG, "checkPermission>>权限校验失败！");
+            return false;
+        }
+
+        // 包名校验
+        String packageName = null;
+        // 获取客户端包名
+        String[] packages = getPackageManager().getPackagesForUid(Binder.getCallingUid());
+        if (packages != null && packages.length > 0) {
+            packageName = packages[0];
+        }
+        if (packageName == null || !packageName.startsWith("com.husky.multiprocess")) { // com.husky.multiprocess 包名
+            Log.d(TAG, "checkPermission>>权限校验失败！");
+            return false;
+        }
+
+        Log.d(TAG, "checkPermission>>权限校验成功！");
+
+        return true;
     }
 
     @Override

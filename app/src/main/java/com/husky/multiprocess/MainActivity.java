@@ -111,12 +111,14 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onMusic(ParcelableMusic music) throws RemoteException {
             Log.d(TAG, "onMusic>>" + music);
+            // 此时回调中处于非UI线程，需要更新UI的可以使用Handler或runOnUiThread切换到UI线程
 
         }
 
         @Override
         public void onVideo(ParcelableVideo video) throws RemoteException {
             Log.d(TAG, "onVideo>>" + video);
+            // 此时回调中处于非UI线程，需要更新UI的可以使用Handler或runOnUiThread切换到UI线程
 
         }
     };
